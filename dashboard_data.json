@@ -1,7 +1,87 @@
 {
   "week_offset": 0,
-  "calendar": {},
-  "meals": {},
+  "calendar": {
+    "2026-W38": {
+      "monday": [],
+      "tuesday": [],
+      "wednesday": [],
+      "thursday": [],
+      "friday": [],
+      "saturday": [],
+      "sunday": []
+    },
+    "2026-W39": {
+      "monday": [],
+      "tuesday": [],
+      "wednesday": [],
+      "thursday": [],
+      "friday": [],
+      "saturday": [],
+      "sunday": []
+    }
+  },
+  "meals": {
+    "2026-W38": {
+      "monday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "tuesday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "wednesday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "thursday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "friday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "saturday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "sunday": {
+        "lunch": "",
+        "dinner": ""
+      }
+    },
+    "2026-W39": {
+      "monday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "tuesday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "wednesday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "thursday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "friday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "saturday": {
+        "lunch": "",
+        "dinner": ""
+      },
+      "sunday": {
+        "lunch": "",
+        "dinner": ""
+      }
+    }
+  },
   "notes": [],
   "shopping_list": []
 }
