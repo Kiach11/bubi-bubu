@@ -1,5 +1,5 @@
 {
-  "week_offset": 1,
+  "week_offset": 0,
   "calendar": {
     "2026-W38": {
       "monday": [],
@@ -100,6 +100,31 @@
     {
       "id": "s_1790431909654",
       "text": "Pan Bauletto",
+      "completed": false
+    },
+    {
+      "id": "s_1790431915678",
+      "text": "Burro arachidi",
+      "completed": false
+    },
+    {
+      "id": "s_1790431918895",
+      "text": "Dolcino",
+      "completed": false
+    },
+    {
+      "id": "s_1790431930623",
+      "text": "Ceci",
+      "completed": false
+    },
+    {
+      "id": "s_1790431947222",
+      "text": "Cavolo nero",
+      "completed": false
+    },
+    {
+      "id": "s_1790431958510",
+      "text": "Porro",
       "completed": false
     }
   ]
