@@ -1,5 +1,5 @@
 {
-  "week_offset": 0,
+  "week_offset": 1,
   "calendar": {
     "2026-W38": {
       "monday": [],
@@ -23,7 +23,15 @@
         }
       ],
       "thursday": [],
-      "friday": [],
+      "friday": [
+        {
+          "id": "e_1790432019681",
+          "type": "event",
+          "time": "21:00",
+          "title": "Cena compleanno Pia",
+          "completed": false
+        }
+      ],
       "saturday": [],
       "sunday": []
     }
@@ -90,7 +98,14 @@
       }
     }
   },
-  "notes": [],
+  "notes": [
+    {
+      "id": "n_1790432061658",
+      "title": "test",
+      "content": "test",
+      "color": "#fef08a"
+    }
+  ],
   "shopping_list": [
     {
       "id": "s_1790431894312",
