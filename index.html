@@ -28,6 +28,9 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        .drag-over {
+            border-top: 2px solid #6366f1 !important;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
@@ -151,7 +154,7 @@
                 <!-- Contenitore Lista -->
                 <div class="flex-grow overflow-y-auto space-y-4 pr-1">
                     <!-- Da Comprare -->
-                    <div id="shoppingPendingList" class="space-y-1.5">
+                    <div id="shoppingPendingList" class="space-y-1.5" ondragover="allowDrop(event)">
                         <!-- Generato da JS -->
                     </div>
 
@@ -179,7 +182,7 @@
                 </div>
 
                 <!-- Griglia Note -->
-                <div id="notesGrid" class="flex-grow overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3 pr-1">
+                <div id="notesGrid" class="flex-grow overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3 pr-1" ondragover="allowDrop(event)">
                     <!-- Generato da JS -->
                 </div>
             </section>
@@ -202,6 +205,7 @@
             
             <form id="eventForm" onsubmit="saveEvent(event)" class="space-y-3">
                 <input type="hidden" id="eventId">
+                <input type="hidden" id="editingOldDayKey">
                 
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Giorno</label>
@@ -217,10 +221,11 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tipo</label>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tipo Evento</label>
                     <select id="eventType" onchange="toggleTimeInput()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        <option value="task">Task / Memo Giornaliero</option>
+                        <option value="task">Task / Memo (con spunta)</option>
                         <option value="event">Evento con Orario</option>
+                        <option value="day_event">Evento Giornaliero (senza spunta)</option>
                     </select>
                 </div>
 
@@ -231,7 +236,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Descrizione</label>
-                    <input type="text" id="eventTitle" required placeholder="Es. Riunione, Spesa, Fisioterapia" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="eventTitle" required placeholder="Es. Riunione, Visita, Fisioterapia" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
                 </div>
 
                 <div class="flex justify-end space-x-2 pt-3">
@@ -384,6 +389,8 @@
         };
 
         let hasUnsavedCloudChanges = false;
+        let draggedShoppingIndex = null;
+        let draggedNoteIndex = null;
 
         // --- Inizializzazione ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -405,7 +412,7 @@
         // --- Gestione Date e Settimane ---
         function getWeekDates(offsetInWeeks = 0) {
             const now = new Date();
-            const dayOfWeek = now.getDay(); // 0 è Domenica
+            const dayOfWeek = now.getDay();
             const distanceToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
             
             const monday = new Date(now);
@@ -477,36 +484,56 @@
                 card.className = `bg-white rounded-xl border ${isToday ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-slate-200'} shadow-sm p-3 flex flex-col min-h-[220px]`;
 
                 let itemsHTML = '';
-                // Ordina prima i task, poi gli eventi per orario
+                // Ordina: prima day_event, poi task, poi eventi con orario
                 const sortedItems = [...items].sort((a,b) => {
-                    if(a.type === 'task' && b.type === 'event') return -1;
-                    if(a.type === 'event' && b.type === 'task') return 1;
+                    const order = { day_event: 1, task: 2, event: 3 };
+                    const typeA = order[a.type] || 2;
+                    const typeB = order[b.type] || 2;
+                    if (typeA !== typeB) return typeA - typeB;
                     return (a.time || '').localeCompare(b.time || '');
                 });
 
                 sortedItems.forEach(item => {
-                    if (item.type === 'task') {
+                    if (item.type === 'day_event') {
+                        // Evento Giornaliero (Senza spunta)
                         itemsHTML += `
-                            <div class="flex items-start justify-between group py-1 border-b border-slate-50 last:border-0">
-                                <label class="flex items-start space-x-2 cursor-pointer flex-grow pr-1">
-                                    <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleTask('${currentWeekKey}', '${dayKey}', '${item.id}')" class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
-                                    <span class="text-xs text-slate-700 leading-tight ${item.completed ? 'completed-item' : ''}">${escapeHtml(item.title)}</span>
-                                </label>
-                                <button onclick="deleteCalendarItem('${currentWeekKey}', '${dayKey}', '${item.id}')" class="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition text-xs">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
+                            <div class="flex items-start justify-between group bg-sky-50 p-1.5 rounded-lg border border-sky-100 my-1">
+                                <div class="flex items-start space-x-1.5 flex-grow min-w-0 pr-1">
+                                    <span class="text-[10px] font-bold bg-sky-200 text-sky-800 px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5">Giornaliero</span>
+                                    <span class="text-xs text-slate-800 font-medium break-words whitespace-normal leading-snug">${escapeHtml(item.title)}</span>
+                                </div>
+                                <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                                    <button onclick="openEventModal('${currentWeekKey}', '${dayKey}', '${item.id}')" class="text-slate-400 hover:text-indigo-600 text-xs"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteCalendarItem('${currentWeekKey}', '${dayKey}', '${item.id}')" class="text-slate-300 hover:text-rose-500 text-xs"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        `;
+                    } else if (item.type === 'event') {
+                        // Evento con Orario
+                        itemsHTML += `
+                            <div class="flex items-start justify-between group bg-slate-50 p-1.5 rounded-lg border border-slate-100 my-1">
+                                <div class="flex items-start space-x-1.5 flex-grow min-w-0 pr-1">
+                                    <span class="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5">${item.time || 'HH:MM'}</span>
+                                    <span class="text-xs text-slate-800 font-medium break-words whitespace-normal leading-snug">${escapeHtml(item.title)}</span>
+                                </div>
+                                <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                                    <button onclick="openEventModal('${currentWeekKey}', '${dayKey}', '${item.id}')" class="text-slate-400 hover:text-indigo-600 text-xs"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteCalendarItem('${currentWeekKey}', '${dayKey}', '${item.id}')" class="text-slate-300 hover:text-rose-500 text-xs"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
                             </div>
                         `;
                     } else {
+                        // Task (Con spunta)
                         itemsHTML += `
-                            <div class="flex items-center justify-between group bg-slate-50 p-1.5 rounded-lg border border-slate-100 my-1">
-                                <div class="flex items-center space-x-1.5 overflow-hidden">
-                                    <span class="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded">${item.time || 'HH:MM'}</span>
-                                    <span class="text-xs text-slate-800 font-medium truncate">${escapeHtml(item.title)}</span>
+                            <div class="flex items-start justify-between group py-1 border-b border-slate-50 last:border-0">
+                                <label class="flex items-start space-x-2 cursor-pointer flex-grow min-w-0 pr-1">
+                                    <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleTask('${currentWeekKey}', '${dayKey}', '${item.id}')" class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 flex-shrink-0">
+                                    <span class="text-xs text-slate-700 leading-tight break-words whitespace-normal ${item.completed ? 'completed-item' : ''}">${escapeHtml(item.title)}</span>
+                                </label>
+                                <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+                                    <button onclick="openEventModal('${currentWeekKey}', '${dayKey}', '${item.id}')" class="text-slate-400 hover:text-indigo-600 text-xs"><i class="fa-solid fa-pen"></i></button>
+                                    <button onclick="deleteCalendarItem('${currentWeekKey}', '${dayKey}', '${item.id}')" class="text-slate-300 hover:text-rose-500 text-xs"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
-                                <button onclick="deleteCalendarItem('${currentWeekKey}', '${dayKey}', '${item.id}')" class="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition text-xs ml-1">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
                             </div>
                         `;
                     }
@@ -518,9 +545,14 @@
                             <span class="text-xs font-bold ${isToday ? 'text-indigo-600' : 'text-slate-500'} uppercase">${DAYS_NAMES[dayKey]}</span>
                             <span class="text-xs text-slate-400 ml-1">${dayDate.getDate()}</span>
                         </div>
-                        ${isToday ? '<span class="text-[10px] bg-indigo-600 text-white font-semibold px-1.5 py-0.5 rounded">Oggi</span>' : ''}
+                        <div class="flex items-center space-x-1">
+                            ${isToday ? '<span class="text-[10px] bg-indigo-600 text-white font-semibold px-1.5 py-0.5 rounded">Oggi</span>' : ''}
+                            <button onclick="openEventModal('${currentWeekKey}', '${dayKey}')" class="text-slate-300 hover:text-indigo-600 text-xs px-1" title="Aggiungi qui">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex-grow space-y-1 overflow-y-auto max-h-[160px]">
+                    <div class="flex-grow space-y-1 overflow-y-auto max-h-[180px]">
                         ${itemsHTML || '<p class="text-[11px] text-slate-300 italic pt-2">Nessun impegno</p>'}
                     </div>
                 `;
@@ -579,7 +611,7 @@
                     <div class="space-y-1">
                         <div class="flex items-center justify-between text-[11px] font-semibold text-amber-600">
                             <span>☀️ PRANZO</span>
-                            <button onclick="sendMealToShopping('${escapeJsStr(dayMeals.lunch)}')" title="Aggiungi ingredients alla spesa" class="hover:text-emerald-600 transition">
+                            <button onclick="sendMealToShopping('${escapeJsStr(dayMeals.lunch)}')" title="Aggiungi alla spesa" class="hover:text-emerald-600 transition">
                                 <i class="fa-solid fa-bag-shopping text-xs"></i>
                             </button>
                         </div>
@@ -590,7 +622,7 @@
                     <div class="space-y-1">
                         <div class="flex items-center justify-between text-[11px] font-semibold text-indigo-600">
                             <span>🌙 CENA</span>
-                            <button onclick="sendMealToShopping('${escapeJsStr(dayMeals.dinner)}')" title="Aggiungi ingredients alla spesa" class="hover:text-emerald-600 transition">
+                            <button onclick="sendMealToShopping('${escapeJsStr(dayMeals.dinner)}')" title="Aggiungi alla spesa" class="hover:text-emerald-600 transition">
                                 <i class="fa-solid fa-bag-shopping text-xs"></i>
                             </button>
                         </div>
@@ -623,7 +655,7 @@
             renderShopping();
         }
 
-        // --- SEZIONE 3: LISTA SPESA ---
+        // --- SEZIONE 3: LISTA SPESA (DRAG & DROP) ---
         function renderShopping() {
             const pendingList = document.getElementById('shoppingPendingList');
             const completedList = document.getElementById('shoppingCompletedList');
@@ -638,34 +670,67 @@
             if (pending.length === 0) {
                 pendingList.innerHTML = '<p class="text-xs text-slate-400 italic py-2">Nessun elemento da comprare.</p>';
             } else {
-                pending.forEach(item => {
-                    pendingList.appendChild(createShoppingItemRow(item));
+                pending.forEach((item, index) => {
+                    pendingList.appendChild(createShoppingItemRow(item, index));
                 });
             }
 
             if (completed.length > 0) {
                 completedSection.classList.remove('hidden');
                 completed.forEach(item => {
-                    completedList.appendChild(createShoppingItemRow(item));
+                    completedList.appendChild(createShoppingItemRow(item, null));
                 });
             } else {
                 completedSection.classList.add('hidden');
             }
         }
 
-        function createShoppingItemRow(item) {
+        function createShoppingItemRow(item, index) {
             const div = document.createElement('div');
+            const isPending = index !== null;
+            
             div.className = "flex items-center justify-between group p-2 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-100 transition";
+            if (isPending) {
+                div.draggable = true;
+                div.ondragstart = (e) => dragShoppingStart(e, index);
+                div.ondragover = (e) => allowDrop(e);
+                div.ondrop = (e) => dropShopping(e, index);
+            }
+
             div.innerHTML = `
-                <label class="flex items-center space-x-2 cursor-pointer flex-grow pr-2">
-                    <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleShopping('${item.id}')" class="rounded text-emerald-600 focus:ring-emerald-500">
-                    <span class="text-xs text-slate-700 ${item.completed ? 'completed-item' : ''}">${escapeHtml(item.text)}</span>
-                </label>
-                <button onclick="deleteShoppingItem('${item.id}')" class="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition text-xs">
+                <div class="flex items-center space-x-2 flex-grow pr-2 min-w-0">
+                    ${isPending ? '<i class="fa-solid fa-grip-vertical text-slate-300 cursor-grab hover:text-slate-500 text-xs"></i>' : ''}
+                    <label class="flex items-center space-x-2 cursor-pointer flex-grow min-w-0">
+                        <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleShopping('${item.id}')" class="rounded text-emerald-600 focus:ring-emerald-500 flex-shrink-0">
+                        <span class="text-xs text-slate-700 break-words whitespace-normal ${item.completed ? 'completed-item' : ''}">${escapeHtml(item.text)}</span>
+                    </label>
+                </div>
+                <button onclick="deleteShoppingItem('${item.id}')" class="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition text-xs flex-shrink-0">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
             `;
             return div;
+        }
+
+        function dragShoppingStart(e, index) {
+            draggedShoppingIndex = index;
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function dropShopping(e, targetIndex) {
+            e.preventDefault();
+            if (draggedShoppingIndex === null || draggedShoppingIndex === targetIndex) return;
+
+            const pending = appState.shopping_list.filter(x => !x.completed);
+            const movedItem = pending.splice(draggedShoppingIndex, 1)[0];
+            pending.splice(targetIndex, 0, movedItem);
+
+            const completed = appState.shopping_list.filter(x => x.completed);
+            appState.shopping_list = [...pending, ...completed];
+
+            draggedShoppingIndex = null;
+            saveAndSync();
+            renderShopping();
         }
 
         function addShoppingItem() {
@@ -704,7 +769,7 @@
             renderShopping();
         }
 
-        // --- SEZIONE 4: LAVAGNA NOTE ---
+        // --- SEZIONE 4: LAVAGNA NOTE (DRAG & DROP) ---
         function renderNotes() {
             const notesGrid = document.getElementById('notesGrid');
             notesGrid.innerHTML = '';
@@ -714,15 +779,23 @@
                 return;
             }
 
-            appState.notes.forEach(note => {
+            appState.notes.forEach((note, index) => {
                 const card = document.createElement('div');
                 card.style.backgroundColor = note.color || '#fef08a';
-                card.className = "rounded-xl p-4 shadow-sm border border-black/5 flex flex-col justify-between space-y-2 h-[180px] relative group";
+                card.className = "rounded-xl p-4 shadow-sm border border-black/5 flex flex-col justify-between space-y-2 h-[180px] relative group cursor-grab active:cursor-grabbing";
+                
+                card.draggable = true;
+                card.ondragstart = (e) => dragNoteStart(e, index);
+                card.ondragover = (e) => allowDrop(e);
+                card.ondrop = (e) => dropNote(e, index);
 
                 card.innerHTML = `
                     <div>
-                        <h4 class="font-bold text-slate-800 text-sm mb-1 truncate">${escapeHtml(note.title)}</h4>
-                        <p class="text-xs text-slate-700 whitespace-pre-line overflow-y-auto max-h-[100px] pr-1 leading-relaxed">${escapeHtml(note.content)}</p>
+                        <div class="flex items-center justify-between mb-1">
+                            <h4 class="font-bold text-slate-800 text-sm truncate pr-2">${escapeHtml(note.title)}</h4>
+                            <i class="fa-solid fa-grip text-black/20 text-xs"></i>
+                        </div>
+                        <p class="text-xs text-slate-700 whitespace-pre-line overflow-y-auto max-h-[95px] pr-1 leading-relaxed">${escapeHtml(note.content)}</p>
                     </div>
                     <div class="flex items-center justify-end space-x-2 pt-2 border-t border-black/5">
                         <button onclick="openNoteModal('${note.id}')" class="text-slate-600 hover:text-slate-900 text-xs"><i class="fa-solid fa-pen"></i> Modifica</button>
@@ -731,6 +804,27 @@
                 `;
                 notesGrid.appendChild(card);
             });
+        }
+
+        function dragNoteStart(e, index) {
+            draggedNoteIndex = index;
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function dropNote(e, targetIndex) {
+            e.preventDefault();
+            if (draggedNoteIndex === null || draggedNoteIndex === targetIndex) return;
+
+            const movedNote = appState.notes.splice(draggedNoteIndex, 1)[0];
+            appState.notes.splice(targetIndex, 0, movedNote);
+
+            draggedNoteIndex = null;
+            saveAndSync();
+            renderNotes();
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
         }
 
         function openNoteModal(id = null) {
@@ -789,10 +883,29 @@
             renderNotes();
         }
 
-        // --- GESTIONE MODALE EVENTI ---
-        function openEventModal() {
+        // --- GESTIONE MODALE EVENTI (CON EDIT E 3 TIPOLOGIE) ---
+        function openEventModal(weekKey = null, dayKey = 'monday', itemId = null) {
             document.getElementById('eventForm').reset();
             document.getElementById('eventId').value = '';
+            document.getElementById('editingOldDayKey').value = dayKey;
+
+            const wKey = weekKey || getWeekKey(getWeekDates(appState.week_offset).monday);
+
+            if (itemId && appState.calendar[wKey] && appState.calendar[wKey][dayKey]) {
+                const item = appState.calendar[wKey][dayKey].find(x => x.id === itemId);
+                if (item) {
+                    document.getElementById('eventId').value = item.id;
+                    document.getElementById('eventDay').value = dayKey;
+                    document.getElementById('eventType').value = item.type || 'task';
+                    document.getElementById('eventTime').value = item.time || '';
+                    document.getElementById('eventTitle').value = item.title || '';
+                    document.getElementById('eventModalTitle').innerText = 'Modifica Evento / Task';
+                }
+            } else {
+                document.getElementById('eventDay').value = dayKey;
+                document.getElementById('eventModalTitle').innerText = 'Nuovo Evento / Task';
+            }
+
             toggleTimeInput();
             document.getElementById('eventModal').classList.remove('hidden');
         }
@@ -816,6 +929,8 @@
             const weekDates = getWeekDates(appState.week_offset);
             const currentWeekKey = getWeekKey(weekDates.monday);
 
+            const eventId = document.getElementById('eventId').value;
+            const oldDay = document.getElementById('editingOldDayKey').value;
             const day = document.getElementById('eventDay').value;
             const type = document.getElementById('eventType').value;
             const time = document.getElementById('eventTime').value;
@@ -825,13 +940,29 @@
                 appState.calendar[currentWeekKey] = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] };
             }
 
-            appState.calendar[currentWeekKey][day].push({
-                id: 'e_' + Date.now(),
-                type,
-                time: type === 'event' ? time : null,
-                title,
-                completed: false
-            });
+            if (eventId) {
+                // Rimuovi la versione precedente (anche in caso di cambio giorno)
+                if (appState.calendar[currentWeekKey][oldDay]) {
+                    appState.calendar[currentWeekKey][oldDay] = appState.calendar[currentWeekKey][oldDay].filter(x => x.id !== eventId);
+                }
+                // Inserisci l'evento aggiornato
+                appState.calendar[currentWeekKey][day].push({
+                    id: eventId,
+                    type,
+                    time: type === 'event' ? time : null,
+                    title,
+                    completed: false
+                });
+            } else {
+                // Nuovo evento
+                appState.calendar[currentWeekKey][day].push({
+                    id: 'e_' + Date.now(),
+                    type,
+                    time: type === 'event' ? time : null,
+                    title,
+                    completed: false
+                });
+            }
 
             saveAndSync();
             renderCalendar();
@@ -964,7 +1095,6 @@
             }
         }
 
-        // Funzione helper per codificare correttamente UTF-8 in Base64 (accetta caratteri accentati)
         function utf8_to_b64(str) {
             return window.btoa(unescape(encodeURIComponent(str)));
         }
@@ -981,7 +1111,6 @@
             const url = `https://api.github.com/repos/${syncConfig.username}/${syncConfig.repo}/contents/${syncConfig.file}`;
             
             try {
-                // 1. Ottieni lo SHA attuale del file
                 let sha = null;
                 const getRes = await fetch(url, {
                     headers: { 'Authorization': `token ${syncConfig.token}` }
@@ -992,11 +1121,9 @@
                     sha = getData.sha;
                 }
 
-                // 2. Prepara il contenuto JSON
                 const contentStr = JSON.stringify(appState, null, 2);
                 const contentB64 = utf8_to_b64(contentStr);
 
-                // 3. Esegui il PUT
                 const putRes = await fetch(url, {
                     method: 'PUT',
                     headers: {
