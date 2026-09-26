@@ -77,15 +77,15 @@
         "dinner": "Spinacine di ceci"
       },
       "wednesday": {
-        "lunch": "Tempeh mediterranea + verdure",
+        "lunch": "Tempeh mediterranea + cicoria",
         "dinner": " ?"
       },
       "thursday": {
-        "lunch": "Piadine humus",
-        "dinner": "Hamburger fagioli + verdure"
+        "lunch": "Piadine humus (insalata/rucola)",
+        "dinner": "Scaloppine tofu + verdure"
       },
       "friday": {
-        "lunch": "Scaloppine tofu + verdure",
+        "lunch": "Hamburger fagioli + verdure",
         "dinner": ""
       },
       "saturday": {
@@ -126,13 +126,13 @@
       "completed": false
     },
     {
-      "id": "s_1790431947222",
-      "text": "Cavolo nero",
+      "id": "s_1790431958510",
+      "text": "Porro",
       "completed": false
     },
     {
-      "id": "s_1790431958510",
-      "text": "Porro",
+      "id": "s_1790431947222",
+      "text": "Cavolo nero",
       "completed": false
     }
   ]
