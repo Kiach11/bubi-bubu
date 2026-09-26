@@ -1,5 +1,5 @@
 {
-  "week_offset": 1,
+  "week_offset": 0,
   "calendar": {
     "2026-W38": {
       "monday": [],
@@ -11,15 +11,7 @@
       "sunday": []
     },
     "2026-W39": {
-      "monday": [
-        {
-          "id": "e_1790432115875",
-          "type": "task",
-          "time": null,
-          "title": "ese",
-          "completed": false
-        }
-      ],
+      "monday": [],
       "tuesday": [],
       "wednesday": [
         {
