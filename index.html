@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubi&Bubu - Dashboard Organizzatore</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome per le Icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .completed-item {
+            text-decoration: line-through;
+            color: #9ca3af;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header Navigation Bar -->
+    <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fa-solid fa-list-check text-2xl text-indigo-200"></i>
+                <h1 class="text-xl font-bold tracking-wide">Bubi&Bubu</h1>
+            </div>
+            
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <!-- Status Cloud Indicator -->
+                <button onclick="openSyncModal()" id="cloudStatusBtn" class="flex items-center space-x-2 bg-indigo-800 hover:bg-indigo-900 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition shadow-inner">
+                    <span id="cloudStatusDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>
+                    <span id="cloudStatusText" class="hidden sm:inline">Sincronizzato</span>
+                </button>
+
+                <!-- Action Menu -->
+                <button onclick="openSyncModal()" title="Impostazioni Sincronizzazione GitHub" class="p-2 rounded-lg hover:bg-indigo-600 transition text-indigo-100 hover:text-white">
+                    <i class="fa-brands fa-github text-lg"></i>
+                </button>
+                <button onclick="exportData()" title="Esporta Backup JSON" class="p-2 rounded-lg hover:bg-indigo-600 transition text-indigo-100 hover:text-white">
+                    <i class="fa-solid fa-download text-lg"></i>
+                </button>
+                <button onclick="triggerImport()" title="Importa JSON" class="p-2 rounded-lg hover:bg-indigo-600 transition text-indigo-100 hover:text-white">
+                    <i class="fa-solid fa-upload text-lg"></i>
+                </button>
+                <input type="file" id="importInput" class="hidden" accept=".json" onchange="importData(event)">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+        <!-- Controlli Settimana Unificati -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                    <i class="fa-regular fa-calendar-days text-xl"></i>
+                </div>
+                <div>
+                    <h2 id="weekRangeDisplay" class="text-lg font-bold text-slate-800">Caricamento settimana...</h2>
+                    <p class="text-xs text-slate-500">Pianificazione impegni e pasti della settimana</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                <button onclick="changeWeek(-1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition flex items-center space-x-1">
+                    <i class="fa-solid fa-chevron-left text-xs"></i>
+                    <span>Prec</span>
+                </button>
+                <button onclick="resetWeek()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium transition">
+                    Oggi
+                </button>
+                <button onclick="changeWeek(1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition flex items-center space-x-1">
+                    <span>Succ</span>
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- SEZIONE 1: CALENDARIO SETTIMANALE -->
+        <section class="space-y-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <h3 class="text-lg font-bold text-slate-800">Calendario & Impegni</h3>
+                    <span class="text-xs bg-indigo-100 text-indigo-800 font-semibold px-2 py-0.5 rounded-full">Settimanale</span>
+                </div>
+                <button onclick="openEventModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Nuovo Evento / Task</span>
+                </button>
+            </div>
+
+            <!-- Griglia Giorni Calendario -->
+            <div id="calendarGrid" class="grid grid-cols-1 md:grid-cols-7 gap-3">
+                <!-- Generato da JS -->
+            </div>
+        </section>
+
+        <!-- SEZIONE 2: PIANO PASTI SETTIMANALE -->
+        <section class="space-y-3">
+            <div class="flex items-center space-x-2">
+                <h3 class="text-lg font-bold text-slate-800">Piano Pasti Settimanale</h3>
+                <span class="text-xs bg-amber-100 text-amber-800 font-semibold px-2 py-0.5 rounded-full">Menu</span>
+            </div>
+
+            <div id="mealsGrid" class="grid grid-cols-1 md:grid-cols-7 gap-3">
+                <!-- Generato da JS -->
+            </div>
+        </section>
+
+        <!-- SEZIONE 3 & 4: LISTA SPESA (KEEP) & LAVAGNA NOTE -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- LISTA DELLA SPESA -->
+            <section class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col h-[520px]">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-cart-shopping text-emerald-600 text-lg"></i>
+                        <h3 class="font-bold text-slate-800">Lista della Spesa</h3>
+                    </div>
+                    <button onclick="clearCompletedShopping()" title="Rimuovi acquistati" class="text-xs text-slate-400 hover:text-rose-600 transition">
+                        <i class="fa-regular fa-trash-can"></i> Pulisci
+                    </button>
+                </div>
+
+                <!-- Input Aggiunta Spesa -->
+                <div class="flex space-x-2 mb-4">
+                    <input type="text" id="shoppingInput" placeholder="Aggiungi elemento..." 
+                        class="flex-grow px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                        onkeypress="if(event.key === 'Enter') addShoppingItem()">
+                    <button onclick="addShoppingItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-sm transition">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <!-- Contenitore Lista -->
+                <div class="flex-grow overflow-y-auto space-y-4 pr-1">
+                    <!-- Da Comprare -->
+                    <div id="shoppingPendingList" class="space-y-1.5">
+                        <!-- Generato da JS -->
+                    </div>
+
+                    <!-- Già Comprai (Comprimibile) -->
+                    <div id="shoppingCompletedSection" class="pt-3 border-t border-slate-100 hidden">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">Completati</span>
+                        <div id="shoppingCompletedList" class="space-y-1.5">
+                            <!-- Generato da JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LAVAGNA APPUNTI (POST-IT) -->
+            <section class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col h-[520px]">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-note-sticky text-amber-500 text-lg"></i>
+                        <h3 class="font-bold text-slate-800">Lavagna Appunti</h3>
+                    </div>
+                    <button onclick="openNoteModal()" class="bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Nuova Nota</span>
+                    </button>
+                </div>
+
+                <!-- Griglia Note -->
+                <div id="notesGrid" class="flex-grow overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-3 pr-1">
+                    <!-- Generato da JS -->
+                </div>
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
+            Bubi&Bubu Dashboard • Dati salvati in locale e sincronizzabili via GitHub Cloud
+        </div>
+    </footer>
+
+    <!-- MODALE 1: AGGIUNGI / MODIFICA EVENTO O TASK -->
+    <div id="eventModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800" id="eventModalTitle">Nuovo Evento</h3>
+            
+            <form id="eventForm" onsubmit="saveEvent(event)" class="space-y-3">
+                <input type="hidden" id="eventId">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Giorno</label>
+                    <select id="eventDay" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="monday">Lunedì</option>
+                        <option value="tuesday">Martedì</option>
+                        <option value="wednesday">Mercoledì</option>
+                        <option value="thursday">Giovedì</option>
+                        <option value="friday">Venerdì</option>
+                        <option value="saturday">Sabato</option>
+                        <option value="sunday">Domenica</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tipo</label>
+                    <select id="eventType" onchange="toggleTimeInput()" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="task">Task / Memo Giornaliero</option>
+                        <option value="event">Evento con Orario</option>
+                    </select>
+                </div>
+
+                <div id="timeContainer" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Orario</label>
+                    <input type="time" id="eventTime" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Descrizione</label>
+                    <input type="text" id="eventTitle" required placeholder="Es. Riunione, Spesa, Fisioterapia" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-3">
+                    <button type="button" onclick="closeEventModal()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition">Annulla</button>
+                    <button type="submit" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition">Salva</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODALE 2: AGGIUNGI / MODIFICA NOTA -->
+    <div id="noteModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-slate-800" id="noteModalTitle">Nuova Nota</h3>
+            
+            <form id="noteForm" onsubmit="saveNote(event)" class="space-y-3">
+                <input type="hidden" id="noteId">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Titolo</label>
+                    <input type="text" id="noteTitle" required placeholder="Es. Codici Wi-Fi, Idee..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Contenuto</label>
+                    <textarea id="noteContent" rows="4" placeholder="Scrivi il testo della nota..." class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Colore Nota</label>
+                    <div class="flex space-x-2">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="noteColor" value="#fef08a" checked class="peer hidden">
+                            <span class="w-7 h-7 rounded-full bg-yellow-200 border-2 border-transparent peer-checked:border-slate-700 block"></span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="noteColor" value="#bbf7d0" class="peer hidden">
+                            <span class="w-7 h-7 rounded-full bg-emerald-200 border-2 border-transparent peer-checked:border-slate-700 block"></span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="noteColor" value="#bfdbfe" class="peer hidden">
+                            <span class="w-7 h-7 rounded-full bg-blue-200 border-2 border-transparent peer-checked:border-slate-700 block"></span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="noteColor" value="#fbcfe8" class="peer hidden">
+                            <span class="w-7 h-7 rounded-full bg-pink-200 border-2 border-transparent peer-checked:border-slate-700 block"></span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="noteColor" value="#e9d5ff" class="peer hidden">
+                            <span class="w-7 h-7 rounded-full bg-purple-200 border-2 border-transparent peer-checked:border-slate-700 block"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-3">
+                    <button type="button" onclick="closeNoteModal()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition">Annulla</button>
+                    <button type="submit" class="px-4 py-2 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition">Salva Nota</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODALE 3: CONFIGURAZIONE GITHUB SYNC -->
+    <div id="syncModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-brands fa-github text-xl text-slate-800"></i>
+                    <h3 class="text-lg font-bold text-slate-800">Sincronizzazione GitHub Cloud</h3>
+                </div>
+                <button onclick="closeSyncModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <p class="text-xs text-slate-500">Configura il tuo repository GitHub e Personal Access Token per salvare i dati nel cloud ed accedervi da qualsiasi dispositivo.</p>
+
+            <form id="syncForm" onsubmit="saveSyncConfig(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username GitHub</label>
+                    <input type="text" id="ghUsername" required placeholder="Es. mario-rossi" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nome Repository</label>
+                    <input type="text" id="ghRepo" required placeholder="Es. bubi-bubu" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nome File Data</label>
+                    <input type="text" id="ghFile" required placeholder="dashboard_data.json" value="dashboard_data.json" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Personal Access Token (PAT)</label>
+                    <input type="password" id="ghToken" required placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg">
+                </div>
+
+                <div class="flex items-center space-x-2 pt-1">
+                    <input type="checkbox" id="ghAutoSync" class="rounded text-indigo-600 focus:ring-indigo-500">
+                    <label for="ghAutoSync" class="text-xs text-slate-700">Abilita caricamento automatico alle modifiche</label>
+                </div>
+
+                <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <div class="space-x-2">
+                        <button type="button" onclick="manualCloudDownload()" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition">
+                            <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Scarica
+                        </button>
+                        <button type="button" onclick="manualCloudUpload()" class="px-3 py-1.5 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-lg transition">
+                            <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Carica
+                        </button>
+                    </div>
+
+                    <div class="space-x-2">
+                        <button type="button" onclick="closeSyncModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg transition">Chiudi</button>
+                        <button type="submit" class="px-4 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition">Salva Config</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // --- Nomi Giorni Settimana ---
+        const DAYS_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        const DAYS_NAMES = {
+            monday: 'Lunedì',
+            tuesday: 'Martedì',
+            wednesday: 'Mercoledì',
+            thursday: 'Giovedì',
+            friday: 'Venerdì',
+            saturday: 'Sabato',
+            sunday: 'Domenica'
+        };
+
+        // --- Stato Principale dell'Applicazione ---
+        let appState = {
+            week_offset: 0,
+            calendar: {},
+            meals: {},
+            notes: [],
+            shopping_list: []
+        };
+
+        let syncConfig = {
+            username: '',
+            repo: '',
+            file: 'dashboard_data.json',
+            token: '',
+            autoSync: false
+        };
+
+        let hasUnsavedCloudChanges = false;
+
+        // --- Inizializzazione ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            loadSyncConfig();
+            renderAll();
+        });
+
+        // --- Rendering Unificato ---
+        function renderAll() {
+            renderHeaderDate();
+            renderCalendar();
+            renderMeals();
+            renderShopping();
+            renderNotes();
+            updateCloudStatusUI();
+        }
+
+        // --- Gestione Date e Settimane ---
+        function getWeekDates(offsetInWeeks = 0) {
+            const now = new Date();
+            const dayOfWeek = now.getDay(); // 0 è Domenica
+            const distanceToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+            
+            const monday = new Date(now);
+            monday.setDate(now.getDate() + distanceToMonday + (offsetInWeeks * 7));
+            monday.setHours(0,0,0,0);
+
+            const dates = {};
+            DAYS_KEYS.forEach((key, index) => {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + index);
+                dates[key] = d;
+            });
+            return dates;
+        }
+
+        function getWeekKey(mondayDate) {
+            const year = mondayDate.getFullYear();
+            const firstJan = new Date(year, 0, 1);
+            const numberOfDays = Math.floor((mondayDate - firstJan) / (24 * 60 * 60 * 1000));
+            const weekNum = Math.ceil((mondayDate.getDay() + 1 + numberOfDays) / 7);
+            return `${year}-W${weekNum}`;
+        }
+
+        function renderHeaderDate() {
+            const weekDates = getWeekDates(appState.week_offset);
+            const mon = weekDates.monday;
+            const sun = weekDates.sunday;
+            
+            const monthNames = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+            const str = `${mon.getDate()} ${monthNames[mon.getMonth()]} - ${sun.getDate()} ${monthNames[sun.getMonth()]} ${sun.getFullYear()}`;
+            document.getElementById('weekRangeDisplay').innerText = str;
+        }
+
+        function changeWeek(direction) {
+            appState.week_offset += direction;
+            saveAndSync();
+            renderAll();
+        }
+
+        function resetWeek() {
+            appState.week_offset = 0;
+            saveAndSync();
+            renderAll();
+        }
+
+        // --- SEZIONE 1: CALENDARIO ---
+        function renderCalendar() {
+            const weekDates = getWeekDates(appState.week_offset);
+            const currentWeekKey = getWeekKey(weekDates.monday);
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+
+            const todayStr = new Date().toDateString();
+
+            if (!appState.calendar[currentWeekKey]) {
+                appState.calendar[currentWeekKey] = {
+                    monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
+                };
+            }
+
+            const currentWeekData = appState.calendar[currentWeekKey];
+
+            DAYS_KEYS.forEach(dayKey => {
+                const dayDate = weekDates[dayKey];
+                const isToday = dayDate.toDateString() === todayStr;
+                const items = currentWeekData[dayKey] || [];
+
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl border ${isToday ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-slate-200'} shadow-sm p-3 flex flex-col min-h-[220px]`;
+
+                let itemsHTML = '';
+                // Ordina prima i task, poi gli eventi per orario
+                const sortedItems = [...items].sort((a,b) => {
+                    if(a.type === 'task' && b.type === 'event') return -1;
+                    if(a.type === 'event' && b.type === 'task') return 1;
+                    return (a.time || '').localeCompare(b.time || '');
+                });
+
+                sortedItems.forEach(item => {
+                    if (item.type === 'task') {
+                        itemsHTML += `
+                            <div class="flex items-start justify-between group py-1 border-b border-slate-50 last:border-0">
+                                <label class="flex items-start space-x-2 cursor-pointer flex-grow pr-1">
+                                    <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleTask('${currentWeekKey}', '${dayKey}', '${item.id}')" class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-xs text-slate-700 leading-tight ${item.completed ? 'completed-item' : ''}">${escapeHtml(item.title)}</span>
+                                </label>
+                                <button onclick="deleteCalendarItem('${currentWeekKey}', '${dayKey}', '${item.id}')" class="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition text-xs">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        itemsHTML += `
+                            <div class="flex items-center justify-between group bg-slate-50 p-1.5 rounded-lg border border-slate-100 my-1">
+                                <div class="flex items-center space-x-1.5 overflow-hidden">
+                                    <span class="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded">${item.time || 'HH:MM'}</span>
+                                    <span class="text-xs text-slate-800 font-medium truncate">${escapeHtml(item.title)}</span>
+                                </div>
+                                <button onclick="deleteCalendarItem('${currentWeekKey}', '${dayKey}', '${item.id}')" class="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition text-xs ml-1">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        `;
+                    }
+                });
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                        <div>
+                            <span class="text-xs font-bold ${isToday ? 'text-indigo-600' : 'text-slate-500'} uppercase">${DAYS_NAMES[dayKey]}</span>
+                            <span class="text-xs text-slate-400 ml-1">${dayDate.getDate()}</span>
+                        </div>
+                        ${isToday ? '<span class="text-[10px] bg-indigo-600 text-white font-semibold px-1.5 py-0.5 rounded">Oggi</span>' : ''}
+                    </div>
+                    <div class="flex-grow space-y-1 overflow-y-auto max-h-[160px]">
+                        ${itemsHTML || '<p class="text-[11px] text-slate-300 italic pt-2">Nessun impegno</p>'}
+                    </div>
+                `;
+
+                calendarGrid.appendChild(card);
+            });
+        }
+
+        function toggleTask(weekKey, dayKey, id) {
+            const item = appState.calendar[weekKey][dayKey].find(x => x.id === id);
+            if (item) {
+                item.completed = !item.completed;
+                saveAndSync();
+                renderCalendar();
+            }
+        }
+
+        function deleteCalendarItem(weekKey, dayKey, id) {
+            appState.calendar[weekKey][dayKey] = appState.calendar[weekKey][dayKey].filter(x => x.id !== id);
+            saveAndSync();
+            renderCalendar();
+        }
+
+        // --- SEZIONE 2: PIANO PASTI ---
+        function renderMeals() {
+            const weekDates = getWeekDates(appState.week_offset);
+            const currentWeekKey = getWeekKey(weekDates.monday);
+            const mealsGrid = document.getElementById('mealsGrid');
+            mealsGrid.innerHTML = '';
+
+            if (!appState.meals[currentWeekKey]) {
+                appState.meals[currentWeekKey] = {
+                    monday: { lunch: '', dinner: '' },
+                    tuesday: { lunch: '', dinner: '' },
+                    wednesday: { lunch: '', dinner: '' },
+                    thursday: { lunch: '', dinner: '' },
+                    friday: { lunch: '', dinner: '' },
+                    saturday: { lunch: '', dinner: '' },
+                    sunday: { lunch: '', dinner: '' }
+                };
+            }
+
+            const currentMealData = appState.meals[currentWeekKey];
+
+            DAYS_KEYS.forEach(dayKey => {
+                const dayMeals = currentMealData[dayKey] || { lunch: '', dinner: '' };
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl border border-slate-200 shadow-sm p-3 flex flex-col space-y-3";
+
+                card.innerHTML = `
+                    <div class="text-xs font-bold text-amber-800 bg-amber-50 px-2 py-1 rounded text-center">
+                        ${DAYS_NAMES[dayKey]}
+                    </div>
+                    
+                    <!-- Pranzo -->
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between text-[11px] font-semibold text-amber-600">
+                            <span>☀️ PRANZO</span>
+                            <button onclick="sendMealToShopping('${escapeJsStr(dayMeals.lunch)}')" title="Aggiungi ingredients alla spesa" class="hover:text-emerald-600 transition">
+                                <i class="fa-solid fa-bag-shopping text-xs"></i>
+                            </button>
+                        </div>
+                        <textarea onblur="updateMeal('${currentWeekKey}', '${dayKey}', 'lunch', this.value)" rows="2" placeholder="Cosa si mangia?" class="w-full text-xs p-1.5 border border-slate-200 rounded focus:ring-1 focus:ring-amber-400 focus:border-amber-400 resize-none bg-slate-50">${escapeHtml(dayMeals.lunch)}</textarea>
+                    </div>
+
+                    <!-- Cena -->
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between text-[11px] font-semibold text-indigo-600">
+                            <span>🌙 CENA</span>
+                            <button onclick="sendMealToShopping('${escapeJsStr(dayMeals.dinner)}')" title="Aggiungi ingredients alla spesa" class="hover:text-emerald-600 transition">
+                                <i class="fa-solid fa-bag-shopping text-xs"></i>
+                            </button>
+                        </div>
+                        <textarea onblur="updateMeal('${currentWeekKey}', '${dayKey}', 'dinner', this.value)" rows="2" placeholder="Cosa si mangia?" class="w-full text-xs p-1.5 border border-slate-200 rounded focus:ring-1 focus:ring-indigo-400 focus:border-indigo-400 resize-none bg-slate-50">${escapeHtml(dayMeals.dinner)}</textarea>
+                    </div>
+                `;
+
+                mealsGrid.appendChild(card);
+            });
+        }
+
+        function updateMeal(weekKey, dayKey, type, value) {
+            if (!appState.meals[weekKey]) appState.meals[weekKey] = {};
+            if (!appState.meals[weekKey][dayKey]) appState.meals[weekKey][dayKey] = { lunch: '', dinner: '' };
+            
+            if (appState.meals[weekKey][dayKey][type] !== value) {
+                appState.meals[weekKey][dayKey][type] = value;
+                saveAndSync();
+            }
+        }
+
+        function sendMealToShopping(mealText) {
+            if (!mealText || !mealText.trim()) return;
+            appState.shopping_list.push({
+                id: 's_' + Date.now(),
+                text: mealText.trim(),
+                completed: false
+            });
+            saveAndSync();
+            renderShopping();
+        }
+
+        // --- SEZIONE 3: LISTA SPESA ---
+        function renderShopping() {
+            const pendingList = document.getElementById('shoppingPendingList');
+            const completedList = document.getElementById('shoppingCompletedList');
+            const completedSection = document.getElementById('shoppingCompletedSection');
+
+            pendingList.innerHTML = '';
+            completedList.innerHTML = '';
+
+            const pending = appState.shopping_list.filter(x => !x.completed);
+            const completed = appState.shopping_list.filter(x => x.completed);
+
+            if (pending.length === 0) {
+                pendingList.innerHTML = '<p class="text-xs text-slate-400 italic py-2">Nessun elemento da comprare.</p>';
+            } else {
+                pending.forEach(item => {
+                    pendingList.appendChild(createShoppingItemRow(item));
+                });
+            }
+
+            if (completed.length > 0) {
+                completedSection.classList.remove('hidden');
+                completed.forEach(item => {
+                    completedList.appendChild(createShoppingItemRow(item));
+                });
+            } else {
+                completedSection.classList.add('hidden');
+            }
+        }
+
+        function createShoppingItemRow(item) {
+            const div = document.createElement('div');
+            div.className = "flex items-center justify-between group p-2 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-100 transition";
+            div.innerHTML = `
+                <label class="flex items-center space-x-2 cursor-pointer flex-grow pr-2">
+                    <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleShopping('${item.id}')" class="rounded text-emerald-600 focus:ring-emerald-500">
+                    <span class="text-xs text-slate-700 ${item.completed ? 'completed-item' : ''}">${escapeHtml(item.text)}</span>
+                </label>
+                <button onclick="deleteShoppingItem('${item.id}')" class="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition text-xs">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+            return div;
+        }
+
+        function addShoppingItem() {
+            const input = document.getElementById('shoppingInput');
+            const val = input.value.trim();
+            if (val) {
+                appState.shopping_list.push({
+                    id: 's_' + Date.now(),
+                    text: val,
+                    completed: false
+                });
+                input.value = '';
+                saveAndSync();
+                renderShopping();
+            }
+        }
+
+        function toggleShopping(id) {
+            const item = appState.shopping_list.find(x => x.id === id);
+            if (item) {
+                item.completed = !item.completed;
+                saveAndSync();
+                renderShopping();
+            }
+        }
+
+        function deleteShoppingItem(id) {
+            appState.shopping_list = appState.shopping_list.filter(x => x.id !== id);
+            saveAndSync();
+            renderShopping();
+        }
+
+        function clearCompletedShopping() {
+            appState.shopping_list = appState.shopping_list.filter(x => !x.completed);
+            saveAndSync();
+            renderShopping();
+        }
+
+        // --- SEZIONE 4: LAVAGNA NOTE ---
+        function renderNotes() {
+            const notesGrid = document.getElementById('notesGrid');
+            notesGrid.innerHTML = '';
+
+            if (appState.notes.length === 0) {
+                notesGrid.innerHTML = '<p class="text-xs text-slate-400 italic col-span-2 py-4 text-center">Nessuna nota presente. Clicca su "+ Nuova Nota" per aggiungerne una.</p>';
+                return;
+            }
+
+            appState.notes.forEach(note => {
+                const card = document.createElement('div');
+                card.style.backgroundColor = note.color || '#fef08a';
+                card.className = "rounded-xl p-4 shadow-sm border border-black/5 flex flex-col justify-between space-y-2 h-[180px] relative group";
+
+                card.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm mb-1 truncate">${escapeHtml(note.title)}</h4>
+                        <p class="text-xs text-slate-700 whitespace-pre-line overflow-y-auto max-h-[100px] pr-1 leading-relaxed">${escapeHtml(note.content)}</p>
+                    </div>
+                    <div class="flex items-center justify-end space-x-2 pt-2 border-t border-black/5">
+                        <button onclick="openNoteModal('${note.id}')" class="text-slate-600 hover:text-slate-900 text-xs"><i class="fa-solid fa-pen"></i> Modifica</button>
+                        <button onclick="deleteNote('${note.id}')" class="text-slate-600 hover:text-rose-700 text-xs"><i class="fa-solid fa-trash"></i> Elimina</button>
+                    </div>
+                `;
+                notesGrid.appendChild(card);
+            });
+        }
+
+        function openNoteModal(id = null) {
+            const modal = document.getElementById('noteModal');
+            document.getElementById('noteForm').reset();
+            document.getElementById('noteId').value = '';
+            document.getElementById('noteModalTitle').innerText = id ? 'Modifica Nota' : 'Nuova Nota';
+
+            if (id) {
+                const note = appState.notes.find(x => x.id === id);
+                if (note) {
+                    document.getElementById('noteId').value = note.id;
+                    document.getElementById('noteTitle').value = note.title;
+                    document.getElementById('noteContent').value = note.content;
+                    const radio = document.querySelector(`input[name="noteColor"][value="${note.color}"]`);
+                    if (radio) radio.checked = true;
+                }
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').classList.add('hidden');
+        }
+
+        function saveNote(e) {
+            e.preventDefault();
+            const id = document.getElementById('noteId').value;
+            const title = document.getElementById('noteTitle').value.trim();
+            const content = document.getElementById('noteContent').value.trim();
+            const color = document.querySelector('input[name="noteColor"]:checked').value;
+
+            if (id) {
+                const note = appState.notes.find(x => x.id === id);
+                if (note) {
+                    note.title = title;
+                    note.content = content;
+                    note.color = color;
+                }
+            } else {
+                appState.notes.push({
+                    id: 'n_' + Date.now(),
+                    title, content, color
+                });
+            }
+
+            saveAndSync();
+            renderNotes();
+            closeNoteModal();
+        }
+
+        function deleteNote(id) {
+            appState.notes = appState.notes.filter(x => x.id !== id);
+            saveAndSync();
+            renderNotes();
+        }
+
+        // --- GESTIONE MODALE EVENTI ---
+        function openEventModal() {
+            document.getElementById('eventForm').reset();
+            document.getElementById('eventId').value = '';
+            toggleTimeInput();
+            document.getElementById('eventModal').classList.remove('hidden');
+        }
+
+        function closeEventModal() {
+            document.getElementById('eventModal').classList.add('hidden');
+        }
+
+        function toggleTimeInput() {
+            const type = document.getElementById('eventType').value;
+            const timeContainer = document.getElementById('timeContainer');
+            if (type === 'event') {
+                timeContainer.classList.remove('hidden');
+            } else {
+                timeContainer.classList.add('hidden');
+            }
+        }
+
+        function saveEvent(e) {
+            e.preventDefault();
+            const weekDates = getWeekDates(appState.week_offset);
+            const currentWeekKey = getWeekKey(weekDates.monday);
+
+            const day = document.getElementById('eventDay').value;
+            const type = document.getElementById('eventType').value;
+            const time = document.getElementById('eventTime').value;
+            const title = document.getElementById('eventTitle').value.trim();
+
+            if (!appState.calendar[currentWeekKey]) {
+                appState.calendar[currentWeekKey] = { monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: [] };
+            }
+
+            appState.calendar[currentWeekKey][day].push({
+                id: 'e_' + Date.now(),
+                type,
+                time: type === 'event' ? time : null,
+                title,
+                completed: false
+            });
+
+            saveAndSync();
+            renderCalendar();
+            closeEventModal();
+        }
+
+        // --- SALVATAGGIO & PERSISTENZA ---
+        function saveToLocalStorage() {
+            localStorage.setItem('bubi_bubu_state', JSON.stringify(appState));
+        }
+
+        function loadFromLocalStorage() {
+            const data = localStorage.getItem('bubi_bubu_state');
+            if (data) {
+                try {
+                    appState = JSON.parse(data);
+                } catch(e) {
+                    console.error("Errore nel caricamento localStorage", e);
+                }
+            }
+        }
+
+        function saveAndSync() {
+            saveToLocalStorage();
+            hasUnsavedCloudChanges = true;
+            updateCloudStatusUI();
+
+            if (syncConfig.autoSync && syncConfig.token) {
+                uploadToGitHub();
+            }
+        }
+
+        // --- BACKUP / IMPORT JSON MANUALE ---
+        function exportData() {
+            const jsonStr = JSON.stringify(appState, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bubi_bubu_backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function triggerImport() {
+            document.getElementById('importInput').click();
+        }
+
+        function importData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    if (data && typeof data === 'object') {
+                        appState = data;
+                        saveAndSync();
+                        renderAll();
+                    }
+                } catch(err) {
+                    alert('Errore: Il file JSON non è valido.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- SINCRONIZZAZIONE GITHUB CLOUD ---
+        function openSyncModal() {
+            document.getElementById('ghUsername').value = syncConfig.username;
+            document.getElementById('ghRepo').value = syncConfig.repo;
+            document.getElementById('ghFile').value = syncConfig.file || 'dashboard_data.json';
+            document.getElementById('ghToken').value = syncConfig.token;
+            document.getElementById('ghAutoSync').checked = syncConfig.autoSync;
+
+            document.getElementById('syncModal').classList.remove('hidden');
+        }
+
+        function closeSyncModal() {
+            document.getElementById('syncModal').classList.add('hidden');
+        }
+
+        function saveSyncConfig(e) {
+            e.preventDefault();
+            syncConfig.username = document.getElementById('ghUsername').value.trim();
+            syncConfig.repo = document.getElementById('ghRepo').value.trim();
+            syncConfig.file = document.getElementById('ghFile').value.trim() || 'dashboard_data.json';
+            syncConfig.token = document.getElementById('ghToken').value.trim();
+            syncConfig.autoSync = document.getElementById('ghAutoSync').checked;
+
+            localStorage.setItem('bubi_bubu_sync_config', JSON.stringify(syncConfig));
+            closeSyncModal();
+            updateCloudStatusUI();
+        }
+
+        function loadSyncConfig() {
+            const conf = localStorage.getItem('bubi_bubu_sync_config');
+            if (conf) {
+                try {
+                    syncConfig = JSON.parse(conf);
+                } catch(e){}
+            }
+        }
+
+        function updateCloudStatusUI(status = null) {
+            const dot = document.getElementById('cloudStatusDot');
+            const text = document.getElementById('cloudStatusText');
+
+            if (status === 'loading') {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse inline-block";
+                text.innerText = "Sincronizzazione...";
+                return;
+            }
+            if (status === 'error') {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500 inline-block";
+                text.innerText = "Errore Sync";
+                return;
+            }
+
+            if (!syncConfig.token) {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-slate-400 inline-block";
+                text.innerText = "Cloud non attivo";
+            } else if (hasUnsavedCloudChanges) {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400 inline-block";
+                text.innerText = "Modifiche locali";
+            } else {
+                dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block";
+                text.innerText = "Sincronizzato";
+            }
+        }
+
+        // Funzione helper per codificare correttamente UTF-8 in Base64 (accetta caratteri accentati)
+        function utf8_to_b64(str) {
+            return window.btoa(unescape(encodeURIComponent(str)));
+        }
+
+        function b64_to_utf8(str) {
+            return decodeURIComponent(escape(window.atob(str)));
+        }
+
+        async function uploadToGitHub() {
+            if (!syncConfig.username || !syncConfig.repo || !syncConfig.token) return;
+
+            updateCloudStatusUI('loading');
+
+            const url = `https://api.github.com/repos/${syncConfig.username}/${syncConfig.repo}/contents/${syncConfig.file}`;
+            
+            try {
+                // 1. Ottieni lo SHA attuale del file
+                let sha = null;
+                const getRes = await fetch(url, {
+                    headers: { 'Authorization': `token ${syncConfig.token}` }
+                });
+                
+                if (getRes.ok) {
+                    const getData = await getRes.json();
+                    sha = getData.sha;
+                }
+
+                // 2. Prepara il contenuto JSON
+                const contentStr = JSON.stringify(appState, null, 2);
+                const contentB64 = utf8_to_b64(contentStr);
+
+                // 3. Esegui il PUT
+                const putRes = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${syncConfig.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Update dashboard data ${new Date().toLocaleString('it-IT')}`,
+                        content: contentB64,
+                        sha: sha || undefined
+                    })
+                });
+
+                if (putRes.ok) {
+                    hasUnsavedCloudChanges = false;
+                    updateCloudStatusUI();
+                } else {
+                    throw new Error('Chiamata API fallita');
+                }
+            } catch (err) {
+                console.error("Errore upload GitHub:", err);
+                updateCloudStatusUI('error');
+            }
+        }
+
+        async function downloadFromGitHub() {
+            if (!syncConfig.username || !syncConfig.repo || !syncConfig.token) return;
+
+            updateCloudStatusUI('loading');
+
+            const url = `https://api.github.com/repos/${syncConfig.username}/${syncConfig.repo}/contents/${syncConfig.file}`;
+
+            try {
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `token ${syncConfig.token}` }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    const decodedJson = b64_to_utf8(data.content);
+                    const parsed = JSON.parse(decodedJson);
+
+                    if (parsed && typeof parsed === 'object') {
+                        appState = parsed;
+                        saveToLocalStorage();
+                        hasUnsavedCloudChanges = false;
+                        renderAll();
+                    }
+                } else {
+                    throw new Error('Chiamata API fallita');
+                }
+            } catch (err) {
+                console.error("Errore download GitHub:", err);
+                updateCloudStatusUI('error');
+            }
+        }
+
+        function manualCloudUpload() {
+            uploadToGitHub().then(() => closeSyncModal());
+        }
+
+        function manualCloudDownload() {
+            downloadFromGitHub().then(() => closeSyncModal());
+        }
+
+        // --- UTILITIES ---
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+
+        function escapeJsStr(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+    </script>
+</body>
+</html>
