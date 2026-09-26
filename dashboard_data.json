@@ -8,7 +8,15 @@
       "thursday": [],
       "friday": [],
       "saturday": [],
-      "sunday": []
+      "sunday": [
+        {
+          "id": "e_1790439961301",
+          "type": "task",
+          "time": null,
+          "title": "Fare Spesa",
+          "completed": false
+        }
+      ]
     },
     "2026-W39": {
       "monday": [],
