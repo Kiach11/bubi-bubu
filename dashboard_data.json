@@ -13,7 +13,15 @@
     "2026-W39": {
       "monday": [],
       "tuesday": [],
-      "wednesday": [],
+      "wednesday": [
+        {
+          "id": "e_1790409569434",
+          "type": "event",
+          "time": "21:00",
+          "title": "Cinema (Bubu)",
+          "completed": false
+        }
+      ],
       "thursday": [],
       "friday": [],
       "saturday": [],
