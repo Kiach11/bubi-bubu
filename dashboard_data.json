@@ -1,5 +1,5 @@
 {
-  "week_offset": 0,
+  "week_offset": 1,
   "calendar": {
     "2026-W38": {
       "monday": [],
@@ -44,7 +44,7 @@
       },
       "saturday": {
         "lunch": "",
-        "dinner": ""
+        "dinner": "Box Pizza"
       },
       "sunday": {
         "lunch": "",
