@@ -11,7 +11,15 @@
       "sunday": []
     },
     "2026-W39": {
-      "monday": [],
+      "monday": [
+        {
+          "id": "e_1790432115875",
+          "type": "task",
+          "time": null,
+          "title": "ese",
+          "completed": false
+        }
+      ],
       "tuesday": [],
       "wednesday": [
         {
@@ -98,14 +106,7 @@
       }
     }
   },
-  "notes": [
-    {
-      "id": "n_1790432061658",
-      "title": "test",
-      "content": "test",
-      "color": "#fef08a"
-    }
-  ],
+  "notes": [],
   "shopping_list": [
     {
       "id": "s_1790431894312",
