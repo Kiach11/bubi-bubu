@@ -69,12 +69,12 @@
         "dinner": "Spinacine di ceci"
       },
       "wednesday": {
-        "lunch": "Tempeh mediterranea",
+        "lunch": "Tempeh mediterranea + verdure",
         "dinner": " ?"
       },
       "thursday": {
         "lunch": "Piadine humus",
-        "dinner": "Hamburger fagioli"
+        "dinner": "Hamburger fagioli + verdure"
       },
       "friday": {
         "lunch": "Scaloppine tofu + verdure",
@@ -91,5 +91,16 @@
     }
   },
   "notes": [],
-  "shopping_list": []
+  "shopping_list": [
+    {
+      "id": "s_1790431894312",
+      "text": "Farina di ceci",
+      "completed": false
+    },
+    {
+      "id": "s_1790431909654",
+      "text": "Pan Bauletto",
+      "completed": false
+    }
+  ]
 }
