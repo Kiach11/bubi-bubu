@@ -109,11 +109,6 @@
   "notes": [],
   "shopping_list": [
     {
-      "id": "s_1790431894312",
-      "text": "Farina di ceci",
-      "completed": false
-    },
-    {
       "id": "s_1790431909654",
       "text": "Pan Bauletto",
       "completed": false
