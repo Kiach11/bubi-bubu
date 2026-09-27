@@ -8,46 +8,14 @@
       "thursday": [],
       "friday": [],
       "saturday": [],
-      "sunday": [
-        {
-          "id": "e_1790439961301",
-          "type": "task",
-          "time": null,
-          "title": "Fare Spesa",
-          "completed": true
-        }
-      ]
+      "sunday": []
     },
     "2026-W39": {
       "monday": [],
-      "tuesday": [
-        {
-          "id": "e_1790499049396",
-          "type": "task",
-          "time": null,
-          "title": "Spesa verdure: giovedì sera + venenrdì pranzo",
-          "completed": false
-        }
-      ],
-      "wednesday": [
-        {
-          "id": "e_1790409569434",
-          "type": "event",
-          "time": "21:00",
-          "title": "Cinema (Bubu)",
-          "completed": false
-        }
-      ],
+      "tuesday": [],
+      "wednesday": [],
       "thursday": [],
-      "friday": [
-        {
-          "id": "e_1790432019681",
-          "type": "event",
-          "time": "21:00",
-          "title": "Cena compleanno Pia",
-          "completed": false
-        }
-      ],
+      "friday": [],
       "saturday": [],
       "sunday": []
     }
@@ -76,32 +44,32 @@
       },
       "saturday": {
         "lunch": "",
-        "dinner": "Box Pizza"
+        "dinner": ""
       },
       "sunday": {
-        "lunch": "Gnocchi",
-        "dinner": "Asporto Yes"
+        "lunch": "",
+        "dinner": ""
       }
     },
     "2026-W39": {
       "monday": {
-        "lunch": "Riso cinese",
-        "dinner": "Spinacine di ceci"
+        "lunch": "",
+        "dinner": ""
       },
       "tuesday": {
-        "lunch": "Riso cinese",
-        "dinner": "Brasato Seitan (cucina botanica) + cicoria"
+        "lunch": "",
+        "dinner": ""
       },
       "wednesday": {
-        "lunch": "Spinacine di ceci",
-        "dinner": " ?"
+        "lunch": "",
+        "dinner": ""
       },
       "thursday": {
-        "lunch": "Piadine humus (insalata/rucola)",
-        "dinner": "Scaloppine tofu + verdure"
+        "lunch": "",
+        "dinner": ""
       },
       "friday": {
-        "lunch": "Hamburger fagioli + verdure",
+        "lunch": "",
         "dinner": ""
       },
       "saturday": {
@@ -115,11 +83,5 @@
     }
   },
   "notes": [],
-  "shopping_list": [
-    {
-      "id": "s_1790525735844",
-      "text": "Olio",
-      "completed": false
-    }
-  ]
+  "shopping_list": []
 }
