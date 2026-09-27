@@ -1,5 +1,5 @@
 {
-  "week_offset": 0,
+  "week_offset": 1,
   "calendar": {
     "2026-W38": {
       "monday": [],
@@ -14,7 +14,7 @@
           "type": "task",
           "time": null,
           "title": "Fare Spesa",
-          "completed": false
+          "completed": true
         }
       ]
     },
@@ -115,5 +115,11 @@
     }
   },
   "notes": [],
-  "shopping_list": []
+  "shopping_list": [
+    {
+      "id": "s_1790525735844",
+      "text": "Olio",
+      "completed": false
+    }
+  ]
 }
