@@ -20,7 +20,15 @@
     },
     "2026-W39": {
       "monday": [],
-      "tuesday": [],
+      "tuesday": [
+        {
+          "id": "e_1790499049396",
+          "type": "task",
+          "time": null,
+          "title": "Spesa verdure: giovedì sera + venenrdì pranzo",
+          "completed": false
+        }
+      ],
       "wednesday": [
         {
           "id": "e_1790409569434",
@@ -71,8 +79,8 @@
         "dinner": "Box Pizza"
       },
       "sunday": {
-        "lunch": "",
-        "dinner": ""
+        "lunch": "Gnocchi",
+        "dinner": "Asporto Yes"
       }
     },
     "2026-W39": {
@@ -107,41 +115,5 @@
     }
   },
   "notes": [],
-  "shopping_list": [
-    {
-      "id": "s_1790431909654",
-      "text": "Pan Bauletto",
-      "completed": false
-    },
-    {
-      "id": "s_1790431915678",
-      "text": "Burro arachidi",
-      "completed": false
-    },
-    {
-      "id": "s_1790431918895",
-      "text": "Dolcino",
-      "completed": false
-    },
-    {
-      "id": "s_1790431930623",
-      "text": "Ceci",
-      "completed": false
-    },
-    {
-      "id": "s_1790431947222",
-      "text": "Cavolo nero",
-      "completed": false
-    },
-    {
-      "id": "s_1790431958510",
-      "text": "Porro",
-      "completed": false
-    },
-    {
-      "id": "s_1790439052625",
-      "text": "Cicoria",
-      "completed": false
-    }
-  ]
+  "shopping_list": []
 }
