@@ -1,5 +1,5 @@
 {
-  "week_offset": 1,
+  "week_offset": 0,
   "calendar": {
     "2026-W38": {
       "monday": [],
@@ -90,7 +90,7 @@
       },
       "tuesday": {
         "lunch": "Riso cinese",
-        "dinner": "Brasato Seitan + cicoria"
+        "dinner": "Brasato Seitan (cucina botanica) + cicoria"
       },
       "wednesday": {
         "lunch": "Spinacine di ceci",
